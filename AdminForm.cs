@@ -113,6 +113,8 @@ namespace SmartParking
                 {
                     _rfidReader.Start(ports[0], 9600);
                 }
+                txtVal6.Click += TxtPortraitImg_Click;
+                txtVehicleImg.Click += TxtVehicleImg_Click;
             }
             catch (Exception ex)
             {
@@ -1043,15 +1045,19 @@ namespace SmartParking
                 lblVal4.Text = "Họ và tên: *";
                 lblVal5.Text = "Ngày sinh: *"; txtVal5.PlaceholderText = "dd/MM/yyyy";
 
-                lblVal6.Text = "Tên tệp ảnh đại diện: *";
-                txtVal6.PlaceholderText = "Ví dụ: avatar1.jpg (Không điền đường dẫn)";
+                // CHỈNH SỬA TẠI ĐÂY: Đổi nhãn và khóa gõ thủ công cho ảnh chân dung
+                lblVal6.Text = "Ảnh chân dung: *";
+                txtVal6.ReadOnly = true;
+                txtVal6.PlaceholderText = "Nhấp vào đây để tải ảnh chân dung lên...";
 
                 lblVal7.Text = "Thông tin xe (màu, hiệu xe):";
                 lblVal8.Text = "Biển số xe: *";
 
-                // KÍCH HOẠT THÊM Ô ẢNH XE ĐĂNG KÝ
-                lblVehicleImg.Text = "Tên tệp ảnh xe: *";
-                txtVehicleImg.PlaceholderText = "Ví dụ: car1.jpg (Không điền đường dẫn)";
+                // CHỈNH SỬA TẠI ĐÂY: Đổi nhãn và khóa gõ thủ công cho ảnh xe
+                lblVehicleImg.Text = "Ảnh xe đăng ký: *";
+                txtVehicleImg.ReadOnly = true;
+                txtVehicleImg.PlaceholderText = "Nhấp vào đây để tải ảnh xe lên...";
+
                 lblVehicleImg.Visible = true;
                 txtVehicleImg.Visible = true;
 
@@ -1266,6 +1272,8 @@ namespace SmartParking
 
         private void ClearCrudInputs()
         {
+            txtVal6.ReadOnly = false;
+            txtVehicleImg.ReadOnly = false;
             txtVal1.Clear(); txtVal2.Clear(); txtVal3.Clear(); txtVal4.Clear();
             txtVal5.Clear(); txtVal6.Clear(); txtVal7.Clear(); txtVal8.Clear();
             txtVehicleImg.Clear();
@@ -1886,6 +1894,43 @@ namespace SmartParking
             }
 
             return expectedPath;
+        }
+
+        private void TxtPortraitImg_Click(object? sender, EventArgs e)
+        {
+            // Chỉ kích hoạt bộ chọn file nếu đang ở bảng quản lý thành viên
+            if (cbTables.SelectedItem?.ToString() == "SubscriptionUsers")
+            {
+                using (OpenFileDialog dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "Định dạng ảnh (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png";
+                    dialog.Title = "Tải lên ảnh chân dung thành viên";
+
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        // Hứng toàn bộ đường dẫn tuyệt đối (Ví dụ: C:\Users\Admin\Pictures\avatar.jpg)
+                        txtVal6.Text = dialog.FileName;
+                    }
+                }
+            }
+        }
+
+        private void TxtVehicleImg_Click(object? sender, EventArgs e)
+        {
+            if (cbTables.SelectedItem?.ToString() == "SubscriptionUsers")
+            {
+                using (OpenFileDialog dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "Định dạng ảnh (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png";
+                    dialog.Title = "Tải lên ảnh xe đăng ký thẻ tháng";
+
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        // Hứng toàn bộ đường dẫn tuyệt đối của ảnh xe
+                        txtVehicleImg.Text = dialog.FileName;
+                    }
+                }
+            }
         }
     }
 }
