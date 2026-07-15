@@ -1,0 +1,8 @@
+# Chỉ mục của AI
+.codegraph/
+scratch/
+
+# File build của VS / C#
+bin/
+obj/
+.vs/
