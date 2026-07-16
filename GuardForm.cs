@@ -16,6 +16,8 @@ namespace SmartParking
         #region Biến toàn cục & Khai báo Dịch vụ
         private readonly CameraService _cameraService = new CameraService();
         private readonly RFIDReader _rfidReader = new RFIDReader();
+        public RFIDReader RfidReader => _rfidReader;
+        public bool IsRegistrationActive = false;
 
         // Bản ghi xe hiện tại đang so sánh ở cổng ra
         private ParkingRecord? _currentParkingRecord = null;
@@ -97,6 +99,40 @@ namespace SmartParking
             Console.WriteLine($"Đang tải Camera Ra Trước RTSP: {camExitFrontUrl}");
             Console.WriteLine($"Đang tải Camera Ra Sau RTSP: {camExitRearUrl}");
 
+            // =========================================================================
+            // GIẢI PHÁP SỬA LỖI: TỰ ĐỘNG KHẢO SÁT LƯỚI VÀ HOÁN ĐỔI CỘT HIỂN THỊ HÀNG DƯỚI
+            // =========================================================================
+            Control containerVaoSau = pbEntryRear;
+            while (containerVaoSau.Parent != null && !(containerVaoSau.Parent is TableLayoutPanel) && containerVaoSau.Parent != this)
+            {
+                containerVaoSau = containerVaoSau.Parent; // Leo ngược lên để tìm GroupBox/Panel bọc ngoài ô Làn Vào
+            }
+
+            Control containerRaSau = pbLiveRear;
+            while (containerRaSau.Parent != null && !(containerRaSau.Parent is TableLayoutPanel) && containerRaSau.Parent != this)
+            {
+                containerRaSau = containerRaSau.Parent; // Leo ngược lên để tìm GroupBox/Panel bọc ngoài ô Làn Ra
+            }
+
+            // Nếu hệ thống sử dụng TableLayoutPanel để chia lưới 2x2
+            if (containerVaoSau.Parent is TableLayoutPanel tableLayout)
+            {
+                int colVao = tableLayout.GetColumn(containerVaoSau);
+                int colRa = tableLayout.GetColumn(containerRaSau);
+
+                // Thực hiện tráo đổi cột trực tiếp trên lưới Layout mẫu để đẩy Làn Ra sang Trái, Làn Vào sang Phải
+                tableLayout.SetColumn(containerVaoSau, colRa);
+                tableLayout.SetColumn(containerRaSau, colVao);
+            }
+            else
+            {
+                // Phương án dự phòng (Fallback) nếu các Panel đặt tự do không dùng lưới TableLayout
+                Point tempLoc = containerVaoSau.Location;
+                containerVaoSau.Location = containerRaSau.Location;
+                containerRaSau.Location = tempLoc;
+            }
+            // =========================================================================
+
             // Khởi động luồng Camera Live Stream
             _cameraService.Start(pbEntryFront, pbEntryRear, pbLiveFront, pbLiveRear);
 
@@ -142,6 +178,7 @@ namespace SmartParking
         #region Lắng nghe thiết bị (RFID & Keyboard Wedge)
         private void RFIDReader_CardSwiped(string cardId)
         {
+            if (IsRegistrationActive) return;
             ProcessCardSwipe(cardId);
         }
 
@@ -400,6 +437,9 @@ namespace SmartParking
                     _cameraService.IsEntryRearLive = false;
                     _cameraService.IsExitFrontLive = false;
                     _cameraService.IsExitRearLive = false;
+
+                    System.Threading.Thread.Sleep(150);
+                    Application.DoEvents();
 
                     // 2. Chụp ảnh snapshot thực tế tại làn ra lúc này
                     _exitFrontSnap?.Dispose();
@@ -755,10 +795,17 @@ namespace SmartParking
         {
             try
             {
-                if (File.Exists(path))
+                // CHUẨN HÓA ĐƯỜNG DẪN: Nếu là đường dẫn tương đối, ép nó đi từ thư mục bin thực thi của App
+                string fullPath = path;
+                if (!Path.IsPathRooted(path))
+                {
+                    fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+                }
+
+                if (File.Exists(fullPath))
                 {
                     // Giải nén file nhị phân trực tiếp ra RAM rồi hiển thị lên PictureBox
-                    Image? decompressedImg = FileStorageManager.LoadCompressedImage(path);
+                    Image? decompressedImg = FileStorageManager.LoadCompressedImage(fullPath);
                     if (decompressedImg != null)
                     {
                         pb.Image?.Dispose();
@@ -798,7 +845,10 @@ namespace SmartParking
 
         private void BtnRegisterMonthly_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Chức năng đang mở: Vui lòng liên hệ Quản trị viên hoặc sử dụng Bảng quản trị (Admin Dashboard) để Đăng ký thẻ tháng.", "Thông báo đăng ký", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (var regForm = new SubscriptionRegistrationForm(_cameraService))
+            {
+                regForm.ShowDialog(this);
+            }
         }
 
         private void BtnSearchPlate_Click(object sender, EventArgs e)

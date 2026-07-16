@@ -109,6 +109,8 @@ namespace SmartParking
                             {
                                 lastRetry = DateTime.Now;
                                 _entryFrontCapture?.Dispose();
+
+                                Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp|fflags;nobuffer|flags;low_delay");
                                 _entryFrontCapture = new VideoCapture(url, VideoCapture.API.Ffmpeg);
                                 _entryFrontCapture.Set(CapProp.Buffersize, 0);
                             }
@@ -170,6 +172,8 @@ namespace SmartParking
                             {
                                 lastRetry = DateTime.Now;
                                 _entryRearCapture?.Dispose();
+
+                                Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp|fflags;nobuffer|flags;low_delay");
                                 _entryRearCapture = new VideoCapture(url, VideoCapture.API.Ffmpeg);
                                 _entryRearCapture.Set(CapProp.Buffersize, 0);
                             }
@@ -230,6 +234,8 @@ namespace SmartParking
                             {
                                 lastRetry = DateTime.Now;
                                 _exitFrontCapture?.Dispose();
+
+                                Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp|fflags;nobuffer|flags;low_delay");
                                 _exitFrontCapture = new VideoCapture(url, VideoCapture.API.Ffmpeg);
                                 _exitFrontCapture.Set(CapProp.Buffersize, 0);
                             }
@@ -290,6 +296,8 @@ namespace SmartParking
                             {
                                 lastRetry = DateTime.Now;
                                 _exitRearCapture?.Dispose();
+
+                                Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp|fflags;nobuffer|flags;low_delay");
                                 _exitRearCapture = new VideoCapture(url, VideoCapture.API.Ffmpeg);
                                 _exitRearCapture.Set(CapProp.Buffersize, 0);
                             }

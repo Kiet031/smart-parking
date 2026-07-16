@@ -56,6 +56,13 @@ namespace SmartParking
         private TextBox txtExitRearUser = new TextBox();
         private TextBox txtExitRearPass = new TextBox();
 
+        private ComboBox cbCardType = new ComboBox();
+        private ComboBox cbStatus = new ComboBox();
+        private TableLayoutPanel? tblCrudInputs;
+        private DateTimePicker dtpVal4 = new DateTimePicker();
+        private DateTimePicker dtpVal5 = new DateTimePicker();
+        private DateTimePicker dtpEntryTime = new DateTimePicker();
+        private DateTimePicker dtpExitTime = new DateTimePicker();
         private Label lblVal5 = new Label();
         private Label lblVal6 = new Label();
         private Label lblVal7 = new Label();
@@ -525,7 +532,7 @@ namespace SmartParking
             grpCrudActions.Controls.Clear();
 
             // 1. Tạo TableLayoutPanel chia lưới nhập liệu
-            TableLayoutPanel tblCrudInputs = new TableLayoutPanel();
+            tblCrudInputs = new TableLayoutPanel();
             tblCrudInputs.Dock = DockStyle.Top;
             tblCrudInputs.Height = 240; // Nới không gian chiều cao lưới lên 240px
             tblCrudInputs.Padding = new Padding(10, 5, 10, 0);
@@ -891,16 +898,16 @@ namespace SmartParking
             switch (selectedValue)
             {
                 case "Hikvision / HiLook":
-                    suffixEntryFront = "/Streaming/Channels/101";
+                    suffixEntryFront = "/Streaming/Channels/102";
                     suffixEntryRear = "/Streaming/Channels/102";
-                    suffixExitFront = "/Streaming/Channels/201";
-                    suffixExitRear = "/Streaming/Channels/202";
+                    suffixExitFront = "/Streaming/Channels/102";
+                    suffixExitRear = "/Streaming/Channels/102";
                     break;
                 case "Tapo (TP-Link)":
-                    suffixEntryFront = "/stream1";
-                    suffixEntryRear = "/stream1";
-                    suffixExitFront = "/stream1";
-                    suffixExitRear = "/stream1";
+                    suffixEntryFront = "/stream2";
+                    suffixEntryRear = "/stream2";
+                    suffixExitFront = "/stream2";
+                    suffixExitRear = "/stream2";
                     break;
                 case "Dahua / Imou":
                     suffixEntryFront = "/cam/realmonitor?channel=1&subtype=0";
@@ -952,7 +959,7 @@ namespace SmartParking
             // FIX LỖI 2: Loại bỏ tận gốc 2 dòng lưu đè CamTruocUrl và CamSauUrl thừa cũ,
             // Thực hiện lệnh SQL xóa trực tiếp chúng khỏi cơ sở dữ liệu để dọn sạch bảng hiển thị.
             string deleteLegacyQuery = "DELETE FROM settings WHERE setting_key IN ('CamTruocUrl', 'CamSauUrl')";
-            DatabaseHelper.ExecuteNonQuery(deleteLegacyQuery, null);
+            DatabaseHelper.ExecuteNonQuery(deleteLegacyQuery, null!);
 
             MessageBox.Show($"Lưu cấu hình bãi xe thành công!\n\n" +
                             $"Link Cam Vào Trước: {rtspEntryFront}\n" +
@@ -987,6 +994,12 @@ namespace SmartParking
 
             string table = cbTables.SelectedItem?.ToString() ?? "";
             ClearCrudInputs();
+            tblCrudInputs?.Controls.Remove(cbCardType);
+            tblCrudInputs?.Controls.Remove(cbStatus);
+            tblCrudInputs?.Controls.Remove(dtpVal4);
+            tblCrudInputs?.Controls.Remove(dtpVal5);
+            tblCrudInputs?.Controls.Remove(dtpEntryTime);
+            tblCrudInputs?.Controls.Remove(dtpExitTime);
 
             // Mặc định bật hiển thị toàn bộ 8 ô, bảng nào thừa ô hệ thống sẽ tự động ẩn đi ở dưới
             Label[] labels = { lblVal1, lblVal2, lblVal3, lblVal4, lblVal5, lblVal6, lblVal7, lblVal8 };
@@ -1011,7 +1024,16 @@ namespace SmartParking
             else if (table == "ActiveParking")
             {
                 lblVal1.Text = "Mã Thẻ: *";
-                lblVal2.Text = "Thời gian vào: *"; txtVal2.PlaceholderText = "dd/MM/yyyy HH:mm:ss hoặc để trống";
+                lblVal2.Text = "Thời gian vào: *";
+                txtVal2.Visible = false;
+
+                // Thiết lập DateTimePicker Thời gian vào
+                dtpEntryTime.Parent = tblCrudInputs;
+                dtpEntryTime.Dock = DockStyle.Fill;
+                dtpEntryTime.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpEntryTime.Format = DateTimePickerFormat.Custom;
+                dtpEntryTime.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+                tblCrudInputs?.Controls.Add(dtpEntryTime, 1, 1);
                 lblVal3.Text = "Đường dẫn ảnh:";
                 lblVal4.Text = "Cổng vào:";
 
@@ -1028,12 +1050,74 @@ namespace SmartParking
             else if (table == "RFIDCards")
             {
                 lblVal1.Text = "Mã thẻ RFID: *";
-                lblVal2.Text = "Mã loại thẻ: *";
+                lblVal2.Text = "Loại thẻ: *";
                 lblVal3.Text = "Trạng thái: *";
                 lblVal4.Text = "Ngày đăng ký: *"; txtVal4.PlaceholderText = "dd/MM/yyyy";
                 lblVal5.Text = "Ngày hết hạn: *"; txtVal5.PlaceholderText = "dd/MM/yyyy";
 
-                for (int i = 5; i < 8; i++) { labels[i].Visible = false; textBoxes[i].Visible = false; }
+                // Ẩn TextBox cũ của loại thẻ, trạng thái, ngày đăng ký, ngày hết hạn
+                txtVal2.Visible = false;
+                txtVal3.Visible = false;
+                txtVal4.Visible = false;
+                txtVal5.Visible = false;
+
+                // Ép hiển thị lại ô Ngày đăng ký và Ngày hết hạn
+                lblVal4.Visible = true;
+                lblVal5.Visible = true;
+
+                // FIX LỖI 1: Ẩn toàn bộ các ô nhập liệu dư thừa của bảng thành viên (Val6, Val7, Val8)
+                for (int i = 5; i < 8; i++)
+                {
+                    labels[i].Visible = false;
+                    textBoxes[i].Visible = false;
+                }
+
+                // Thiết lập ComboBox Loại thẻ
+                cbCardType.Parent = tblCrudInputs;
+                cbCardType.Dock = DockStyle.Fill;
+                cbCardType.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                cbCardType.DropDownStyle = ComboBoxStyle.DropDownList;
+                tblCrudInputs?.Controls.Add(cbCardType, 1, 1);
+
+                cbCardType.DataSource = DatabaseHelper.GetTableData("card_types");
+                cbCardType.DisplayMember = "card_type_name";
+                cbCardType.ValueMember = "card_type_id";
+
+                // Thiết lập ComboBox Trạng thái bằng DataSource để kích hoạt thuộc tính SelectedValue
+                cbStatus.Parent = tblCrudInputs;
+                cbStatus.Dock = DockStyle.Fill;
+                cbStatus.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                cbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
+
+                // Tạo danh sách liên kết để gán vào DataSource
+                var statusList = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>("Active", "1"),
+                    new KeyValuePair<string, string>("Block", "0")
+                };
+
+                cbStatus.DataSource = statusList; // Gán nguồn dữ liệu chuẩn
+                cbStatus.DisplayMember = "Key";
+                cbStatus.ValueMember = "Value";
+                cbStatus.SelectedIndex = 0; // Mặc định chọn mục đầu tiên (Active)
+
+                tblCrudInputs?.Controls.Add(cbStatus, 2, 1);
+
+                // Thiết lập DateTimePicker Ngày đăng ký
+                dtpVal4.Parent = tblCrudInputs;
+                dtpVal4.Dock = DockStyle.Fill;
+                dtpVal4.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpVal4.Format = DateTimePickerFormat.Custom;
+                dtpVal4.CustomFormat = "dd/MM/yyyy";
+                tblCrudInputs?.Controls.Add(dtpVal4, 3, 1);
+
+                // Thiết lập DateTimePicker Ngày hết hạn
+                dtpVal5.Parent = tblCrudInputs;
+                dtpVal5.Dock = DockStyle.Fill;
+                dtpVal5.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpVal5.Format = DateTimePickerFormat.Custom;
+                dtpVal5.CustomFormat = "dd/MM/yyyy";
+                tblCrudInputs?.Controls.Add(dtpVal5, 0, 3);
             }
             else if (table == "SubscriptionUsers")
             {
@@ -1043,7 +1127,16 @@ namespace SmartParking
                 lblVal2.Text = "Mã thẻ RFID: *";
                 lblVal3.Text = "Mã số định danh: *";
                 lblVal4.Text = "Họ và tên: *";
-                lblVal5.Text = "Ngày sinh: *"; txtVal5.PlaceholderText = "dd/MM/yyyy";
+                lblVal5.Text = "Ngày sinh: *";
+                txtVal5.Visible = false;
+
+                // Thiết lập DateTimePicker Ngày sinh
+                dtpVal5.Parent = tblCrudInputs;
+                dtpVal5.Dock = DockStyle.Fill;
+                dtpVal5.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpVal5.Format = DateTimePickerFormat.Custom;
+                dtpVal5.CustomFormat = "dd/MM/yyyy";
+                tblCrudInputs?.Controls.Add(dtpVal5, 0, 3);
 
                 // CHỈNH SỬA TẠI ĐÂY: Đổi nhãn và khóa gõ thủ công cho ảnh chân dung
                 lblVal6.Text = "Ảnh chân dung: *";
@@ -1069,9 +1162,29 @@ namespace SmartParking
             {
                 lblVal1.Text = "Mã giao dịch: (Tự tăng)"; txtVal1.PlaceholderText = "Không cần nhập khi thêm mới";
                 lblVal2.Text = "Mã thẻ RFID: *";
-                lblVal3.Text = "Thời gian vào: *"; txtVal3.PlaceholderText = "dd/MM/yyyy HH:mm:ss";
+                lblVal3.Text = "Thời gian vào: *";
+                txtVal3.Visible = false;
+
+                // Thiết lập DateTimePicker Thời gian vào
+                dtpEntryTime.Parent = tblCrudInputs;
+                dtpEntryTime.Dock = DockStyle.Fill;
+                dtpEntryTime.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpEntryTime.Format = DateTimePickerFormat.Custom;
+                dtpEntryTime.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+                tblCrudInputs?.Controls.Add(dtpEntryTime, 2, 1);
+
                 lblVal4.Text = "Đường dẫn ảnh vào:";
-                lblVal5.Text = "Thời gian ra: *"; txtVal5.PlaceholderText = "dd/MM/yyyy HH:mm:ss";
+
+                lblVal5.Text = "Thời gian ra: *";
+                txtVal5.Visible = false;
+
+                // Thiết lập DateTimePicker Thời gian ra
+                dtpExitTime.Parent = tblCrudInputs;
+                dtpExitTime.Dock = DockStyle.Fill;
+                dtpExitTime.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                dtpExitTime.Format = DateTimePickerFormat.Custom;
+                dtpExitTime.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+                tblCrudInputs?.Controls.Add(dtpExitTime, 0, 3);
                 lblVal6.Text = "Đường dẫn ảnh ra:";
                 lblVal7.Text = "Phí đã thu: *";
                 lblVal8.Text = "Cổng ra: *";
@@ -1164,7 +1277,15 @@ namespace SmartParking
                     string cardId = (row.Cells["card_id"]?.Value ?? row.Cells["CardID"]?.Value)?.ToString() ?? "";
                     _originalKey = cardId;
                     txtVal1.Text = cardId;
-                    txtVal2.Text = (row.Cells["entry_time"]?.Value ?? row.Cells["EntryTime"]?.Value)?.ToString() ?? "";
+                    object? entryTimeVal = row.Cells["entry_time"]?.Value ?? row.Cells["EntryTime"]?.Value;
+                    if (entryTimeVal != null && entryTimeVal != DBNull.Value)
+                    {
+                        dtpEntryTime.Value = Convert.ToDateTime(entryTimeVal);
+                    }
+                    else
+                    {
+                        dtpEntryTime.Value = DateTime.Now;
+                    }
                     txtVal3.Text = (row.Cells["entry_image_path"]?.Value ?? row.Cells["FrontImagePath"]?.Value)?.ToString() ?? "";
                     txtVal4.Text = (row.Cells["entry_gate"]?.Value ?? row.Cells["RearImagePath"]?.Value)?.ToString() ?? "";
                 }
@@ -1179,18 +1300,53 @@ namespace SmartParking
                 }
                 else if (table == "RFIDCards")
                 {
-                    string cardId = (row.Cells["card_id"]?.Value ?? row.Cells[0].Value)?.ToString() ?? "";
+                    // FIX LỖI 3: Lấy chính xác mã thẻ dựa trên tên cột bất kể thứ tự hiển thị trên lưới
+                    string cardId = (row.Cells["card_id"]?.Value ?? row.Cells["CardID"]?.Value ?? row.Cells[1].Value)?.ToString() ?? "";
                     _originalKey = cardId;
                     txtVal1.Text = cardId;
-                    txtVal2.Text = (row.Cells["card_type_id"]?.Value ?? row.Cells[1].Value)?.ToString() ?? "";
-                    txtVal3.Text = (row.Cells["status"]?.Value ?? row.Cells[2].Value)?.ToString() ?? "";
 
-                    // Đổ thêm trường ngày đăng ký và hết hạn chuẩn chỉ
-                    if (row.Cells["registration_date"]?.Value is DateTime regDate) txtVal4.Text = regDate.ToString("dd/MM/yyyy");
-                    else txtVal4.Text = row.Cells["registration_date"]?.Value?.ToString() ?? "";
+                    if (row.Cells["card_type_id"]?.Value != null)
+                    {
+                        cbCardType.SelectedValue = row.Cells["card_type_id"]?.Value?.ToString() ?? "";
+                    }
 
-                    if (row.Cells["expiry_date"]?.Value is DateTime expDate) txtVal5.Text = expDate.ToString("dd/MM/yyyy");
-                    else txtVal5.Text = row.Cells["expiry_date"]?.Value?.ToString() ?? "";
+                    if (row.Cells["status"]?.Value != null)
+                    {
+                        string statusVal = row.Cells["status"]?.Value?.ToString()?.Trim() ?? "";
+                        // FIX LỖI 4: Chuẩn hóa dữ liệu hỗn hợp (chấp nhận khớp cả chữ 'Active' lẫn số '1')
+                        if (statusVal.Equals("Active", StringComparison.OrdinalIgnoreCase) || statusVal == "1")
+                            cbStatus.SelectedValue = "1";
+                        else
+                            cbStatus.SelectedValue = "0";
+                    }
+
+                    // Đổ dữ liệu ngày đăng ký (dtpVal4) chuẩn chỉ hỗ trợ cả DateOnly lẫn DateTime
+                    if (row.Cells["registration_date"]?.Value is DateOnly regDateOnly)
+                    {
+                        dtpVal4.Value = regDateOnly.ToDateTime(TimeOnly.MinValue);
+                    }
+                    else if (row.Cells["registration_date"]?.Value is DateTime regDateTime)
+                    {
+                        dtpVal4.Value = regDateTime;
+                    }
+                    else
+                    {
+                        dtpVal4.Value = DateTime.Today;
+                    }
+
+                    // Đổ dữ liệu ngày hết hạn (dtpVal5) chuẩn chỉ hỗ trợ cả DateOnly lẫn DateTime
+                    if (row.Cells["expiry_date"]?.Value is DateOnly expDateOnly)
+                    {
+                        dtpVal5.Value = expDateOnly.ToDateTime(TimeOnly.MinValue);
+                    }
+                    else if (row.Cells["expiry_date"]?.Value is DateTime expDateTime)
+                    {
+                        dtpVal5.Value = expDateTime;
+                    }
+                    else
+                    {
+                        dtpVal5.Value = DateTime.Today;
+                    }
                 }
                 else if (table == "SubscriptionUsers")
                 {
@@ -1201,8 +1357,19 @@ namespace SmartParking
                     txtVal3.Text = (row.Cells["user_code"]?.Value ?? row.Cells[2].Value)?.ToString() ?? "";
                     txtVal4.Text = (row.Cells["full_name"]?.Value ?? row.Cells[3].Value)?.ToString() ?? "";
 
-                    if (row.Cells["birth_date"]?.Value is DateTime bDate) txtVal5.Text = bDate.ToString("dd/MM/yyyy");
-                    else txtVal5.Text = row.Cells["birth_date"]?.Value?.ToString() ?? "";
+                    // SỬA ĐỔI AN TOÀN: Đón đầu sửa lỗi ép kiểu ngày sinh của thành viên
+                    if (row.Cells["birth_date"]?.Value is DateOnly birthDateOnly)
+                    {
+                        dtpVal5.Value = birthDateOnly.ToDateTime(TimeOnly.MinValue);
+                    }
+                    else if (row.Cells["birth_date"]?.Value is DateTime birthDateTime)
+                    {
+                        dtpVal5.Value = birthDateTime;
+                    }
+                    else
+                    {
+                        dtpVal5.Value = new DateTime(2000, 1, 1);
+                    }
 
                     // XỬ LÝ ĐƯỜNG DẪN ẢNH ĐỘNG KHI CLICK CHỌN DÒNG
                     string fullImagePath = (row.Cells["member_image_path"]?.Value ?? row.Cells[5].Value)?.ToString() ?? "";
@@ -1246,13 +1413,25 @@ namespace SmartParking
                     txtVal1.Text = _selectedRowId?.ToString() ?? "";
                     txtVal2.Text = (row.Cells["card_id"]?.Value ?? row.Cells[1].Value)?.ToString() ?? "";
 
-                    if (row.Cells["entry_time"]?.Value is DateTime enTime) txtVal3.Text = enTime.ToString("dd/MM/yyyy HH:mm:ss");
-                    else txtVal3.Text = row.Cells["entry_time"]?.Value?.ToString() ?? "";
+                    if (row.Cells["entry_time"]?.Value != null && row.Cells["entry_time"].Value != DBNull.Value)
+                    {
+                        dtpEntryTime.Value = Convert.ToDateTime(row.Cells["entry_time"].Value);
+                    }
+                    else
+                    {
+                        dtpEntryTime.Value = DateTime.Now;
+                    }
 
                     txtVal4.Text = (row.Cells["entry_image_path"]?.Value ?? row.Cells[3].Value)?.ToString() ?? "";
 
-                    if (_originalExitTime is DateTime exTime) txtVal5.Text = exTime.ToString("dd/MM/yyyy HH:mm:ss");
-                    else txtVal5.Text = _originalExitTime?.ToString() ?? "";
+                    if (_originalExitTime != null && _originalExitTime != DBNull.Value)
+                    {
+                        dtpExitTime.Value = Convert.ToDateTime(_originalExitTime);
+                    }
+                    else
+                    {
+                        dtpExitTime.Value = DateTime.Now;
+                    }
 
                     txtVal6.Text = (row.Cells["exit_image_path"]?.Value ?? row.Cells[5].Value)?.ToString() ?? "";
                     txtVal7.Text = (row.Cells["fee_collected"]?.Value ?? row.Cells[6].Value)?.ToString() ?? "";
@@ -1274,10 +1453,16 @@ namespace SmartParking
         {
             txtVal6.ReadOnly = false;
             txtVehicleImg.ReadOnly = false;
+            txtVehicleImg.Clear();
             txtVal1.Clear(); txtVal2.Clear(); txtVal3.Clear(); txtVal4.Clear();
             txtVal5.Clear(); txtVal6.Clear(); txtVal7.Clear(); txtVal8.Clear();
-            txtVehicleImg.Clear();
-            if (cbMemberRole.Items.Count > 0) cbMemberRole.SelectedIndex = 0; // THÊM DÒNG NÀY
+            cbCardType.SelectedIndex = -1;
+            cbStatus.SelectedIndex = -1;
+            if (cbMemberRole.Items.Count > 0) cbMemberRole.SelectedIndex = 0;
+            dtpVal4.Value = DateTime.Today;
+            dtpVal5.Value = DateTime.Today;
+            dtpEntryTime.Value = DateTime.Now;
+            dtpExitTime.Value = DateTime.Now;
             _selectedRowId = null;
             _originalExitTime = null;
             _originalKey = null;
@@ -1315,8 +1500,8 @@ namespace SmartParking
         {
             string table = cbTables.SelectedItem?.ToString() ?? "";
             string v1 = txtVal1.Text.Trim();
-            string v2 = txtVal2.Text.Trim();
-            string v3 = txtVal3.Text.Trim();
+            string v2 = (table == "RFIDCards") ? (cbCardType.SelectedValue?.ToString() ?? "") : txtVal2.Text.Trim();
+            string v3 = (table == "RFIDCards") ? (cbStatus.SelectedValue?.ToString() ?? "") : txtVal3.Text.Trim();
             string v4 = txtVal4.Text.Trim();
             string v5 = txtVal5.Text.Trim();
             string v6 = txtVal6.Text.Trim();
@@ -1359,12 +1544,7 @@ namespace SmartParking
                         MessageBox.Show("Thẻ này hiện đang nằm trong bãi xe!", "Trùng khóa chính", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
-                    DateTime entryTime = DateTime.Now;
-                    if (!string.IsNullOrEmpty(v2) && !DateTime.TryParseExact(v2, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out entryTime))
-                    {
-                        MessageBox.Show("Thời gian vào không hợp lệ! Hãy nhập đúng định dạng ngày tháng.", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    DateTime entryTime = dtpEntryTime.Value;
                     string gate = string.IsNullOrEmpty(v4) ? "Cổng số 1" : v4;
                     string query = "INSERT INTO active_parking (card_id, entry_time, entry_image_path, entry_gate) VALUES (@v1, @v2, @v3, @v4)";
                     var p = new Dictionary<string, object> {
@@ -1394,6 +1574,9 @@ namespace SmartParking
                 }
                 else if (table == "RFIDCards")
                 {
+                    v2 = cbCardType.SelectedValue?.ToString() ?? "";
+                    v3 = cbStatus.SelectedValue?.ToString() ?? "";
+
                     if (RecordExists("rfid_cards", "card_id", v1))
                     {
                         MessageBox.Show("Mã thẻ RFID này đã tồn tại!", "Trùng khóa chính", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1405,10 +1588,8 @@ namespace SmartParking
                         return;
                     }
 
-                    DateTime regDate = DateTime.Today;
-                    DateTime expiry = DateTime.Today.AddYears(1);
-                    DateTime.TryParseExact(v4, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out regDate);
-                    DateTime.TryParseExact(v5, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out expiry);
+                    DateTime regDate = dtpVal4.Value.Date;
+                    DateTime expiry = dtpVal5.Value.Date;
 
                     string q = "INSERT INTO rfid_cards (card_id, card_type_id, status, registration_date, expiry_date) VALUES (@v1, @v2, @v3, @v4, @v5)";
                     var p = new Dictionary<string, object> { { "v1", v1 }, { "v2", v2 }, { "v3", v3 }, { "v4", regDate }, { "v5", expiry } };
@@ -1421,8 +1602,7 @@ namespace SmartParking
                         MessageBox.Show("Mã thẻ RFID này chưa tồn tại trong danh mục thẻ (rfid_cards)!", "Lỗi Khóa Ngoại", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
-                    DateTime birthDate = DateTime.Parse("2000-01-01");
-                    DateTime.TryParseExact(v5, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out birthDate);
+                    DateTime birthDate = dtpVal5.Value.Date;
 
                     string finalImgPath = GetOrCreateSubscriptionImagePath(v6, v8, "portrait");
                     string finalVehicleImgPath = GetOrCreateSubscriptionImagePath(txtVehicleImg.Text.Trim(), v8, "vehicle");
@@ -1448,17 +1628,9 @@ namespace SmartParking
                         return;
                     }
 
-                    DateTime entryTime;
-                    DateTime exitTime;
+                    DateTime entryTime = dtpEntryTime.Value;
+                    DateTime exitTime = dtpExitTime.Value;
                     decimal fee = 0;
-
-                    // Kiểm tra và bóc tách định dạng ngày tháng từ đúng ô v3 và v5
-                    if (!DateTime.TryParseExact(v3, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out entryTime) ||
-                        !DateTime.TryParseExact(v5, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out exitTime))
-                    {
-                        MessageBox.Show("Thời gian vào hoặc thời gian ra không đúng định dạng ngày tháng (dd/MM/yyyy HH:mm:ss)!", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
 
                     if (!string.IsNullOrEmpty(v7) && !decimal.TryParse(v7, out fee))
                     {
@@ -1509,8 +1681,8 @@ namespace SmartParking
         {
             string table = cbTables.SelectedItem?.ToString() ?? "";
             string v1 = txtVal1.Text.Trim();
-            string v2 = txtVal2.Text.Trim();
-            string v3 = txtVal3.Text.Trim();
+            string v2 = (table == "RFIDCards") ? (cbCardType.SelectedValue?.ToString() ?? "") : txtVal2.Text.Trim();
+            string v3 = (table == "RFIDCards") ? (cbStatus.SelectedValue?.ToString() ?? "") : txtVal3.Text.Trim();
             string v4 = txtVal4.Text.Trim();
             string v5 = txtVal5.Text.Trim();
             string v6 = txtVal6.Text.Trim();
@@ -1550,12 +1722,7 @@ namespace SmartParking
                         MessageBox.Show("Vui lòng chọn dòng cần sửa!", "Yêu Cầu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
-                    DateTime entryTime;
-                    if (!DateTime.TryParseExact(v2, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out entryTime))
-                    {
-                        MessageBox.Show("Thời gian vào không hợp lệ!", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    DateTime entryTime = dtpEntryTime.Value;
                     if (v1 != _originalKey.ToString() && !RecordExists("rfid_cards", "card_id", v1))
                     {
                         MessageBox.Show("Mã thẻ RFID mới chưa tồn tại trong rfid_cards!", "Lỗi Khóa Ngoại", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1593,17 +1760,17 @@ namespace SmartParking
                 else if (table == "RFIDCards")
                 {
                     if (_originalKey == null || string.IsNullOrEmpty(_originalKey.ToString())) return;
+
+                    // FIX LỖI 2: Đồng bộ kéo dữ liệu từ ComboBox mới thay vì TextBox ẩn
+                    v2 = cbCardType.SelectedValue?.ToString() ?? "";
+                    v3 = cbStatus.SelectedValue?.ToString() ?? "";
+
                     if (!RecordExists("card_types", "card_type_id", v2))
                     {
                         MessageBox.Show("Mã loại thẻ chưa tồn tại!", "Lỗi Khóa Ngoại", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
-                    DateTime expiry;
-                    if (!DateTime.TryParseExact(v4, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out expiry))
-                    {
-                        MessageBox.Show("Ngày hết hạn không hợp lệ!", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    DateTime expiry = dtpVal5.Value.Date;
                     string q = "UPDATE rfid_cards SET card_id = @new_card, card_type_id = @type_id, status = @status, expiry_date = @expiry WHERE card_id = @old_card";
                     var p = new Dictionary<string, object> {
                         { "new_card", v1 },
@@ -1622,12 +1789,7 @@ namespace SmartParking
                         MessageBox.Show("Mã thẻ RFID chưa tồn tại!", "Lỗi Khóa Ngoại", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
-                    DateTime birthDate;
-                    if (!DateTime.TryParseExact(v5, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out birthDate))
-                    {
-                        MessageBox.Show("Ngày sinh không hợp lệ!", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    DateTime birthDate = dtpVal5.Value.Date;
 
                     // =========================================================================
                     // THÊM MỚI: TỰ ĐỘNG ĐỔI TÊN THƯ MỤC ẢNH TRÊN Ổ CỨNG NẾU ĐỔI BIỂN SỐ XE
@@ -1688,17 +1850,9 @@ namespace SmartParking
                 {
                     if (_selectedRowId == null || _originalExitTime == null) return;
 
-                    DateTime entryTime;
-                    DateTime exitTime;
+                    DateTime entryTime = dtpEntryTime.Value;
+                    DateTime exitTime = dtpExitTime.Value;
                     decimal fee;
-
-                    // SỬA ĐỔI: Đối chiếu đúng ô nhập: v3 là entry_time, v5 là exit_time
-                    if (!DateTime.TryParseExact(v3, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out entryTime) ||
-                        !DateTime.TryParseExact(v5, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out exitTime))
-                    {
-                        MessageBox.Show("Thời gian vào hoặc ra không hợp lệ (dd/MM/yyyy HH:mm:ss)!", "Lỗi Định Dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
 
                     if (!decimal.TryParse(v7, out fee))
                     {
@@ -1857,7 +2011,7 @@ namespace SmartParking
                     MessageBox.Show("Đã reset dữ liệu bãi xe thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     RefreshGrid();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }
