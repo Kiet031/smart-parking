@@ -64,8 +64,6 @@ namespace SmartParking
             // Bottom Ribbon Panel
             this.pnlBottomRibbon = new System.Windows.Forms.Panel();
             this.btnRegisterMonthly = new System.Windows.Forms.Button();
-            this.lblSearchPlate = new System.Windows.Forms.Label();
-            this.txtSearchPlate = new System.Windows.Forms.TextBox();
             this.btnSearchPlate = new System.Windows.Forms.Button();
             this.btnLogout = new System.Windows.Forms.Button();
 
@@ -443,13 +441,13 @@ namespace SmartParking
             this.btnWarning.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnWarning.FlatAppearance.BorderSize = 0;
             this.btnWarning.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnWarning.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnWarning.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.btnWarning.ForeColor = System.Drawing.Color.White;
             this.btnWarning.Location = new System.Drawing.Point(12, 110);
             this.btnWarning.Name = "btnWarning";
             this.btnWarning.Size = new System.Drawing.Size(205, 48);
             this.btnWarning.TabIndex = 1;
-            this.btnWarning.Text = "ĐÓNG BARIE\n(Esc)";
+            this.btnWarning.Text = "ĐÓNG BARIE (ESC)";
             this.btnWarning.UseVisualStyleBackColor = false;
             this.btnWarning.Click += new System.EventHandler(this.BtnWarning_Click);
             // 
@@ -459,13 +457,13 @@ namespace SmartParking
             this.btnAllowExit.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnAllowExit.FlatAppearance.BorderSize = 0;
             this.btnAllowExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAllowExit.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnAllowExit.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.btnAllowExit.ForeColor = System.Drawing.Color.White;
             this.btnAllowExit.Location = new System.Drawing.Point(227, 110);
             this.btnAllowExit.Name = "btnAllowExit";
             this.btnAllowExit.Size = new System.Drawing.Size(205, 48);
             this.btnAllowExit.TabIndex = 0;
-            this.btnAllowExit.Text = "MỞ BARIE\n(Enter)";
+            this.btnAllowExit.Text = "MỞ BARIE (ENTER)";
             this.btnAllowExit.UseVisualStyleBackColor = false;
             this.btnAllowExit.Click += new System.EventHandler(this.BtnAllowExit_Click);
             // 
@@ -498,13 +496,13 @@ namespace SmartParking
             this.btnEnableAudio.BackColor = System.Drawing.Color.FromArgb(22, 163, 74);
             this.btnEnableAudio.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnEnableAudio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnEnableAudio.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnEnableAudio.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.btnEnableAudio.ForeColor = System.Drawing.Color.White;
             this.btnEnableAudio.Location = new System.Drawing.Point(10, 40);
             this.btnEnableAudio.Name = "btnEnableAudio";
             this.btnEnableAudio.Size = new System.Drawing.Size(60, 60);
             this.btnEnableAudio.TabIndex = 0;
-            this.btnEnableAudio.Text = "Bật Loa\n🔊";
+            this.btnEnableAudio.Text = "Bật Loa";
             this.btnEnableAudio.UseVisualStyleBackColor = false;
             this.btnEnableAudio.Click += new System.EventHandler(this.BtnEnableAudio_Click);
             // 
@@ -513,13 +511,13 @@ namespace SmartParking
             this.btnDisableAudio.BackColor = System.Drawing.Color.FromArgb(100, 116, 139);
             this.btnDisableAudio.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnDisableAudio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDisableAudio.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnDisableAudio.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.btnDisableAudio.ForeColor = System.Drawing.Color.White;
             this.btnDisableAudio.Location = new System.Drawing.Point(10, 120);
             this.btnDisableAudio.Name = "btnDisableAudio";
             this.btnDisableAudio.Size = new System.Drawing.Size(60, 60);
             this.btnDisableAudio.TabIndex = 1;
-            this.btnDisableAudio.Text = "Tắt Loa\n🔇";
+            this.btnDisableAudio.Text = "Tắt Loa";
             this.btnDisableAudio.UseVisualStyleBackColor = false;
             this.btnDisableAudio.Click += new System.EventHandler(this.BtnDisableAudio_Click);
 
@@ -528,8 +526,6 @@ namespace SmartParking
             // 
             this.pnlBottomRibbon.BackColor = System.Drawing.Color.FromArgb(30, 41, 59);
             this.pnlBottomRibbon.Controls.Add(this.btnRegisterMonthly);
-            this.pnlBottomRibbon.Controls.Add(this.lblSearchPlate);
-            this.pnlBottomRibbon.Controls.Add(this.txtSearchPlate);
             this.pnlBottomRibbon.Controls.Add(this.btnSearchPlate);
             this.pnlBottomRibbon.Controls.Add(this.btnLogout); // ĐÃ XÓA DÒNG LBLCOMSTATUS TẠI ĐÂY
             this.pnlBottomRibbon.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -544,7 +540,7 @@ namespace SmartParking
             this.btnRegisterMonthly.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnRegisterMonthly.FlatAppearance.BorderSize = 0;
             this.btnRegisterMonthly.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRegisterMonthly.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnRegisterMonthly.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.btnRegisterMonthly.ForeColor = System.Drawing.Color.White;
             this.btnRegisterMonthly.Location = new System.Drawing.Point(15, 12);
             this.btnRegisterMonthly.Name = "btnRegisterMonthly";
@@ -554,37 +550,17 @@ namespace SmartParking
             this.btnRegisterMonthly.UseVisualStyleBackColor = false;
             this.btnRegisterMonthly.Click += new System.EventHandler(this.BtnRegisterMonthly_Click);
             // 
-            // lblSearchPlate
-            // 
-            this.lblSearchPlate.AutoSize = true;
-            this.lblSearchPlate.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblSearchPlate.ForeColor = System.Drawing.Color.White;
-            this.lblSearchPlate.Location = new System.Drawing.Point(400, 20);
-            this.lblSearchPlate.Name = "lblSearchPlate";
-            this.lblSearchPlate.Size = new System.Drawing.Size(95, 19);
-            this.lblSearchPlate.TabIndex = 1;
-            this.lblSearchPlate.Text = "Tìm kiếm xe:";
-            // 
-            // txtSearchPlate
-            // 
-            this.txtSearchPlate.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.txtSearchPlate.Location = new System.Drawing.Point(500, 16);
-            this.txtSearchPlate.Name = "txtSearchPlate";
-            this.txtSearchPlate.Size = new System.Drawing.Size(200, 27);
-            this.txtSearchPlate.TabIndex = 2;
-            this.txtSearchPlate.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TxtSearchPlate_KeyDown);
-            // 
             // btnSearchPlate
             // 
-            this.btnSearchPlate.BackColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.btnSearchPlate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
             this.btnSearchPlate.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSearchPlate.FlatAppearance.BorderSize = 0;
             this.btnSearchPlate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSearchPlate.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnSearchPlate.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.btnSearchPlate.ForeColor = System.Drawing.Color.White;
-            this.btnSearchPlate.Location = new System.Drawing.Point(710, 15);
+            this.btnSearchPlate.Location = new System.Drawing.Point(210, 12);
             this.btnSearchPlate.Name = "btnSearchPlate";
-            this.btnSearchPlate.Size = new System.Drawing.Size(120, 28);
+            this.btnSearchPlate.Size = new System.Drawing.Size(180, 36);
             this.btnSearchPlate.TabIndex = 3;
             this.btnSearchPlate.Text = "🔍 Tìm kiếm";
             this.btnSearchPlate.UseVisualStyleBackColor = false;
@@ -597,7 +573,7 @@ namespace SmartParking
             this.btnLogout.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnLogout.FlatAppearance.BorderSize = 0;
             this.btnLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.btnLogout.ForeColor = System.Drawing.Color.White;
             this.btnLogout.Location = new System.Drawing.Point(1140, 12);
             this.btnLogout.Name = "btnLogout";
@@ -988,8 +964,6 @@ namespace SmartParking
         // Bottom Ribbon
         private System.Windows.Forms.Panel pnlBottomRibbon;
         private System.Windows.Forms.Button btnRegisterMonthly;
-        private System.Windows.Forms.Label lblSearchPlate;
-        private System.Windows.Forms.TextBox txtSearchPlate;
         private System.Windows.Forms.Button btnSearchPlate;
         private System.Windows.Forms.Button btnLogout;
 

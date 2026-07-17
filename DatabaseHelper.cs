@@ -1059,5 +1059,246 @@ namespace SmartParking
             return (dt, totalCount);
         }
         #endregion
+
+        #region Custom Vehicles Search Methods
+        public static bool TryParseFlexibleDateTime(string input, out DateTime start, out DateTime end)
+        {
+            start = DateTime.MinValue;
+            end = DateTime.MaxValue;
+            if (string.IsNullOrWhiteSpace(input)) return false;
+
+            string trimInput = input.Trim();
+            string[] formats = { "dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm", "dd/MM/yyyy HH", "dd/MM/yyyy" };
+
+            foreach (var fmt in formats)
+            {
+                if (DateTime.TryParseExact(trimInput, fmt, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsed))
+                {
+                    if (fmt == "dd/MM/yyyy")
+                    {
+                        start = parsed.Date;
+                        end = parsed.Date.AddDays(1).AddSeconds(-1);
+                    }
+                    else if (fmt == "dd/MM/yyyy HH")
+                    {
+                        start = new DateTime(parsed.Year, parsed.Month, parsed.Day, parsed.Hour, 0, 0);
+                        end = start.AddHours(1).AddSeconds(-1);
+                    }
+                    else if (fmt == "dd/MM/yyyy HH:mm")
+                    {
+                        start = new DateTime(parsed.Year, parsed.Month, parsed.Day, parsed.Hour, parsed.Minute, 0);
+                        end = start.AddMinutes(1).AddSeconds(-1);
+                    }
+                    else if (fmt == "dd/MM/yyyy HH:mm:ss")
+                    {
+                        start = parsed;
+                        end = parsed;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static DataTable SearchParkingTransactions(
+            string searchTerm, 
+            string searchType, 
+            bool filterMonthly, 
+            bool filterCasual, 
+            bool filterInYard,
+            bool filterOutYard,
+            int limit, 
+            int offset, 
+            out int totalCount)
+        {
+            totalCount = 0;
+            var dt = new DataTable();
+
+            try
+            {
+                using (var connection = new NpgsqlConnection(GetConnectionString()))
+                {
+                    connection.Open();
+
+                    List<string> whereClauses = new List<string>();
+                    var parameters = new Dictionary<string, object>();
+
+                    if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        switch (searchType)
+                        {
+                            case "Biển số xe":
+                                whereClauses.Add("(su.license_plate ILIKE @search OR t.entry_image_path ILIKE @search OR t.exit_image_path ILIKE @search)");
+                                parameters.Add("@search", $"%{searchTerm}%");
+                                break;
+                            case "Mã thẻ RFID":
+                                whereClauses.Add("t.card_id ILIKE @search");
+                                parameters.Add("@search", $"%{searchTerm}%");
+                                break;
+                            case "Mã sinh viên/mã giáo viên":
+                                whereClauses.Add("su.user_code ILIKE @search");
+                                parameters.Add("@search", $"%{searchTerm}%");
+                                break;
+                            case "Mã thành viên":
+                                whereClauses.Add("su.member_id ILIKE @search");
+                                parameters.Add("@search", $"%{searchTerm}%");
+                                break;
+                            case "Thời gian vào":
+                                if (TryParseFlexibleDateTime(searchTerm, out DateTime startIn, out DateTime endIn))
+                                {
+                                    whereClauses.Add("t.entry_time BETWEEN @startTime AND @endTime");
+                                    parameters.Add("@startTime", startIn);
+                                    parameters.Add("@endTime", endIn);
+                                }
+                                else
+                                {
+                                    whereClauses.Add("1 = 0");
+                                }
+                                break;
+                            case "Thời gian ra":
+                                if (TryParseFlexibleDateTime(searchTerm, out DateTime startOut, out DateTime endOut))
+                                {
+                                    whereClauses.Add("t.exit_time BETWEEN @startTime AND @endTime");
+                                    parameters.Add("@startTime", startOut);
+                                    parameters.Add("@endTime", endOut);
+                                }
+                                else
+                                {
+                                    whereClauses.Add("1 = 0");
+                                }
+                                break;
+                        }
+                    }
+
+                    if (filterMonthly && !filterCasual)
+                    {
+                        whereClauses.Add("rc.card_type_id IN ('1', '2', '3')");
+                    }
+                    else if (!filterMonthly && filterCasual)
+                    {
+                        whereClauses.Add("rc.card_type_id = '4'");
+                    }
+
+                    if (filterInYard && !filterOutYard)
+                    {
+                        whereClauses.Add("t.exit_time IS NULL");
+                    }
+                    else if (!filterInYard && filterOutYard)
+                    {
+                        whereClauses.Add("t.exit_time IS NOT NULL");
+                    }
+
+                    string whereString = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+                    string countQuery = $@"
+                        SELECT COUNT(1)
+                        FROM (
+                            SELECT 
+                                card_id, 
+                                entry_time, 
+                                NULL::timestamp as exit_time, 
+                                entry_image_path, 
+                                NULL::text as exit_image_path
+                            FROM active_parking
+                            
+                            UNION ALL
+                            
+                            SELECT 
+                                card_id, 
+                                entry_time, 
+                                exit_time, 
+                                entry_image_path, 
+                                exit_image_path
+                            FROM parking_history
+                        ) t
+                        JOIN rfid_cards rc ON t.card_id = rc.card_id
+                        JOIN card_types ct ON rc.card_type_id = ct.card_type_id
+                        LEFT JOIN subscription_users su ON rc.card_id = su.card_id
+                        {whereString}
+                    ";
+
+                    using (var cmd = new NpgsqlCommand(countQuery, connection))
+                    {
+                        foreach (var kp in parameters)
+                        {
+                            cmd.Parameters.AddWithValue(kp.Key, kp.Value);
+                        }
+                        totalCount = Convert.ToInt32(cmd.ExecuteScalar() ?? 0);
+                    }
+
+                    string dataQuery = $@"
+                        SELECT 
+                            t.card_id,
+                            t.entry_time,
+                            t.exit_time,
+                            t.status,
+                            t.entry_image_path,
+                            t.exit_image_path,
+                            t.fee_collected,
+                            t.exit_gate,
+                            ct.card_type_name,
+                            su.member_id,
+                            su.user_code,
+                            su.full_name,
+                            su.vehicle_info,
+                            su.license_plate,
+                            su.member_image_path
+                        FROM (
+                            SELECT 
+                                card_id, 
+                                entry_time, 
+                                NULL::timestamp as exit_time, 
+                                'Trong bãi' as status, 
+                                entry_image_path, 
+                                NULL::text as exit_image_path, 
+                                0::numeric as fee_collected, 
+                                NULL::text as exit_gate
+                            FROM active_parking
+                            
+                            UNION ALL
+                            
+                            SELECT 
+                                card_id, 
+                                entry_time, 
+                                exit_time, 
+                                'Đã ra' as status, 
+                                entry_image_path, 
+                                exit_image_path, 
+                                fee_collected, 
+                                exit_gate
+                            FROM parking_history
+                        ) t
+                        JOIN rfid_cards rc ON t.card_id = rc.card_id
+                        JOIN card_types ct ON rc.card_type_id = ct.card_type_id
+                        LEFT JOIN subscription_users su ON rc.card_id = su.card_id
+                        {whereString}
+                        ORDER BY COALESCE(t.exit_time, t.entry_time) DESC
+                        LIMIT @limit OFFSET @offset
+                    ";
+
+                    using (var cmd = new NpgsqlCommand(dataQuery, connection))
+                    {
+                        foreach (var kp in parameters)
+                        {
+                            cmd.Parameters.AddWithValue(kp.Key, kp.Value);
+                        }
+                        cmd.Parameters.AddWithValue("@limit", limit);
+                        cmd.Parameters.AddWithValue("@offset", offset);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            dt.Load(reader);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionManager.HandleException(ex, "Tìm kiếm lịch sử đỗ xe");
+            }
+
+            return dt;
+        }
+        #endregion
     }
 }

@@ -193,13 +193,12 @@ namespace SmartParking
         private void GuardForm_KeyDown(object? sender, KeyEventArgs e)
         {
             // Nếu bảo vệ đang gõ trực tiếp trong các ô văn bản, cho phép ô tự nhận chữ
-            if (txtSimCardId.Focused || txtSimPlate.Focused || txtSearchPlate.Focused)
+            if (txtSimCardId.Focused || txtSimPlate.Focused)
             {
                 if (e.KeyCode == Keys.Enter)
                 {
                     if (txtSimCardId.Focused) BtnSimSwipe_Click(this, EventArgs.Empty);
                     else if (txtSimPlate.Focused) BtnSetPlate_Click(this, EventArgs.Empty);
-                    else if (txtSearchPlate.Focused) BtnSearchPlate_Click(this, EventArgs.Empty);
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                 }
@@ -229,7 +228,7 @@ namespace SmartParking
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             // Nếu phím gõ xuống là Enter và bảo vệ không phải đang nhập ở các ô văn bản
-            if (keyData == Keys.Enter && !txtSimCardId.Focused && !txtSimPlate.Focused && !txtSearchPlate.Focused)
+            if (keyData == Keys.Enter && !txtSimCardId.Focused && !txtSimPlate.Focused)
             {
                 // TH 1: Bộ đệm đang thu thập mã thẻ từ thiết bị quét RFID (Keyboard Wedge)
                 if (_kbdBuffer.Length >= 4)
@@ -853,28 +852,9 @@ namespace SmartParking
 
         private void BtnSearchPlate_Click(object sender, EventArgs e)
         {
-            string plate = txtSearchPlate.Text.Trim().ToUpper();
-            if (!string.IsNullOrEmpty(plate))
+            using (var searchForm = new SearchVehicleForm(""))
             {
-                _cameraService.CurrentFrontPlate = plate;
-                _cameraService.CurrentRearPlate = plate;
-                _cameraService.IsVehiclePresent = true;
-                lblStatusText.Text = $"ĐÃ GIẢ LẬP BIỂN SỐ CHO CAMERA: {plate}";
-                txtSearchPlate.Clear();
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng nhập biển số xe cần giả lập / tìm kiếm!", "Tìm kiếm thông tin xe", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
-
-        private void TxtSearchPlate_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                BtnSearchPlate_Click(this, EventArgs.Empty);
-                e.Handled = true;
-                e.SuppressKeyPress = true;
+                searchForm.ShowDialog(this);
             }
         }
         #endregion
